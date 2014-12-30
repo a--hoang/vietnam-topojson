@@ -3,25 +3,26 @@
 	
 	<meta charset="utf-8">
 	<style>
-		.subunit.VNM { fill: #dab; }
-	
-		.subunit-boundary {
-		  fill: none;
-		  stroke: #777;
-		  stroke-dasharray: 2,2;
-		  stroke-linejoin: round;
+		
+		.subunit.VNM { fill: #ddc; } 
+
+		.place, 
+		.place-label {
+			fill: #444;
 		}
 
-		.subunit-boundary.VNM {
-		  stroke: #aaa;
-		}
-
-		.subunit-label {
+		.subunit-label.VNM {
 			fill: #777;
-			fill-opacity: .5;
-			font-size: 20px;
-			font-weight: 300;
-			text-anchor: middle;
+		  	fill-opacity: .5;
+		  	font-size: 20px;
+		  	font-weight: 300;
+		  	text-anchor: middle;
+		}
+
+		text {
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  			font-size: 6px;
+  			pointer-events: none;
 		}
 
 	</style>
@@ -30,22 +31,51 @@
 	<script src="http://d3js.org/topojson.v1.min.js"></script>
 	<script>
 		var width = 960,
-			height =1160;
+			height =960;
 
 		var svg = d3.select("body").append("svg")
 			.attr("width", width)
 			.attr("height", height);
 
-		var projection = d3.geo.mercator();
+		var projection = d3.geo.mercator()
+			.scale(2250)
+			.translate([-3700,1000]);
 
-		var path = d3.geo.path().projection(projection);
+		var path = d3.geo.path()
+    		.projection(projection)
+    		.pointRadius(2);
 
 		d3.json("vietnam.json", function(error, vietnam) {
-		  if (error) return console.error(error);
+			
+			svg.selectAll(".subunit")
+				.data(topojson.feature(vietnam, vietnam.objects.subunits).features)
+				.enter().append("path")
+				.attr("class", "subunit VNM")
+				.attr("d", path);
 
-		  svg.append("path")
-		      .datum(topojson.feature(vietnam, vietnam.objects.subunits))
-		      .attr("d", path);
+			svg.append("path")
+				.datum(topojson.feature(vietnam, vietnam.objects['viet-places']))
+				.attr("d", path)
+				.attr("class", "place");
+
+			svg.selectAll(".place-label")
+			    .data(topojson.feature(vietnam, vietnam.objects['viet-places']).features)
+			  .enter().append("text")
+			    .attr("class", "place-label")
+			    .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+			    .attr("dy", ".35em")
+			    .attr("dx", ".5em")
+			    .text(function(d) { return d.properties.name; });
+
+			svg.selectAll(".subunit-label")
+				.data(topojson.feature(vietnam, vietnam.objects.subunits).features)
+				.enter().append("text")
+				.attr("class", "subunit-label VNM")
+				.attr("transform", function(d) { return "translate(" + path.centroid(d) + ")";})
+				.attr("dy", ".35em")
+			    .attr("dx", ".5em")
+			    .text("Vietnam");
+
 		});
 	</script>
 </html>
